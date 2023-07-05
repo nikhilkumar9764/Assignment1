@@ -1,0 +1,85 @@
+<head>
+    <script src = "https://cdn.babylonjs.com/babylon.js">
+    </script>
+</head>
+
+<body>
+    <canvas id = "renderCanvas"></canvas>
+
+    <script type = "text/javascript">
+
+        var canvas = document.getElementById("renderCanvas");
+
+var engine = new BABYLON.Engine(canvas,true);
+
+function createScene()
+{
+    var scene = new BABYLON.Scene(engine);
+    var camera = new BABYLON.ArcRotateCamera("camera" ,0,0,0, BABYLON.Vector3.Zero(),scene);
+    camera.setPosition(new BABYLON.Vector3(0,0,-5));
+    scene.on;
+    camera.attachControl(canvas,true);
+    var light = new BABYLON.HemisphericLight("light" , new BABYLON.Vector3(0,1,0) , scene);
+    var box = BABYLON.MeshBuilder.CreateBox("box" , { size : 2} , scene);
+    
+    return scene;
+}
+
+var pickedMesh = null;
+var startPos = null;
+var endPos = null;
+
+canvas.addEventListener("positionDown" , function(event){
+    var pickResult = scene.pick(scene.pointerX , scene.pointerY);
+    if(pickResult.hit)
+    {
+        pickedMesh = pickResult.pickedMesh;
+        startPos = pickedResult.pickedPoint;
+    } 
+    
+})
+
+canvas.addEventListener("positionUp" , function(event){
+
+    if(pickedMesh)
+    {
+        var pickResult = scene.pick(scene.pointerX , scene.pointerY);
+        if(pickResult.hit && pickResult.pickedMesh === pickedMesh)
+        {
+            endPos = pickResult.pickedPoint;
+            extrudeMesh();
+        } 
+    }
+})
+
+function extrudeMesh()
+{
+    var direction = endPos.subtract(startPos);
+    var animation = new BABYLON.Animation("extrusionAnimation" , "scaling", 30 , BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+    BABYLON.animation.ANIMATIONLOOPMODE_CONSTANT);
+
+    var keys = [];
+    keys.push({
+        frame : 0,
+        value : pickedMesh.scaling.clone()
+    });
+    keys.push({
+        frame : 100,
+        value : pickedMesh.scaling.add(direction)
+    })
+
+    animation.setKeys(keys);
+    scene.beginDirectAnimation(pickedMesh , [animation] , 0, 100 , false);
+}
+
+var sc = createScene();
+
+engine.runRenderLoop(function(){
+     sc.render();
+});
+
+    </script>
+</body>
+
+
+
